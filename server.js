@@ -23,7 +23,23 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware 
 
-app.use(cors()); 
+// CORS configuration - Allow Netlify to access Railway backend
+app.use(cors({
+    origin: [
+        'https://dynamic-medovik-dff9c4.netlify.app', // Your Netlify URL
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://127.0.0.1:3000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(cors({
+    origin: '*',
+    credentials: true
+}));
 
 app.use(bodyParser.json()); 
 
