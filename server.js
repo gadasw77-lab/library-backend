@@ -1,72 +1,36 @@
-// LibraryBackend/server.js - COMPLETE VERSION WITH DEBUGGING 
-
- 
-
+// LibraryBackend/server.js - CORS FIXED VERSION
 
 const express = require('express'); 
-
 const cors = require('cors'); 
-
 const bodyParser = require('body-parser'); 
-
 require('dotenv').config(); 
-
 const path = require('path'); 
 
- 
-
 const app = express(); 
-
 const PORT = process.env.PORT || 8080; 
 
- 
-
-// Middleware 
-
-// CORS configuration - Allow Netlify to access Railway backend
+// ✅ CORS Middleware - FIXED!
 app.use(cors({
-    origin: [
-        'https://dynamic-medovik-dff9c4.netlify.app', // Your Netlify URL
-        'http://localhost:3000',
-        'http://localhost:8080',
-        'http://127.0.0.1:3000'
-    ],
+    origin: '*', // Allow all origins
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(cors({
-    origin: '*',
-    credentials: true
-}));
-
+// Other Middleware 
 app.use(bodyParser.json()); 
-
 app.use(bodyParser.urlencoded({ extended: true })); 
 
- 
-
 // Request Logger 
-
 app.use((req, res, next) => { 
-
     console.log(`\n🔵 ${req.method} ${req.path}`); 
-
     if (Object.keys(req.query).length > 0) { 
-
         console.log('   Query:', req.query); 
-
     } 
-
     if (Object.keys(req.body).length > 0) { 
-
         console.log('   Body:', req.body); 
-
     } 
-
     next(); 
-
 }); 
 
  
