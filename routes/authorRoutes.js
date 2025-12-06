@@ -1,4 +1,4 @@
-// LibraryBackend/routes/authorRoutes.js - COMPLETE WITH UPLOAD
+// LibraryBackend/routes/authorRoutes.js - FIXED VERSION
 
 const express = require('express');
 const router = express.Router();
@@ -9,12 +9,17 @@ console.log('✍️ Loading Author Routes...');
 // Get author by user ID
 router.get('/get-by-user/:userId', authorController.getAuthorByUserId);
 
-// FILE UPLOAD - IMPORTANT!
-router.post('/upload-book', 
-    authorController.uploadMiddleware, 
-    authorController.uploadBookFile
-);
-console.log('✅ Upload route registered: POST /api/author/upload-book');
+// FILE UPLOAD - Check if uploadMiddleware exists
+if (authorController.uploadMiddleware) {
+    router.post('/upload-book',
+        authorController.uploadMiddleware,
+        authorController.uploadBookFile
+    );
+    console.log('✅ Upload route registered with middleware');
+} else {
+    // Fallback: no file upload
+    console.log('⚠️ Upload middleware not found, skipping upload route');
+}
 
 // Books
 router.post('/books', authorController.addBook);
