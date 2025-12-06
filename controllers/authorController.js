@@ -1,40 +1,18 @@
-// LibraryBackend/controllers/authorController.js - COMPLETE WITH UPLOAD
-
 // LibraryBackend/controllers/authorController.js
 
 const db = require('../config/database');
-const multer = require('multer');
-const cloudinary = require('../config/cloudinary');
-const { Readable } = require('stream');
+const cloudinary = require('cloudinary').v2;
 
-// ============================================
-// MULTER SETUP - MEMORY STORAGE (NOT DISK)
-// ============================================
-
-const storage = multer.memoryStorage(); // Store in memory, not disk
-
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-    } else {
-        cb(new Error('Only PDF files are allowed!'), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 50 * 1024 * 1024 // 50MB
-    }
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-exports.uploadMiddleware = upload.single('bookFile');
-
 // ============================================
-// UPLOAD TO CLOUDINARY
+// UPLOAD BOOK FILE TO CLOUDINARY
 // ============================================
-
 exports.uploadBookFile = async (req, res) => {
     try {
         console.log('📤 Upload request received');
@@ -47,47 +25,40 @@ exports.uploadBookFile = async (req, res) => {
             });
         }
 
-        console.log('📄 File received:', {
+        console.log('📁 File details:', {
             name: req.file.originalname,
             size: req.file.size,
             mimetype: req.file.mimetype
         });
 
-        // Create a readable stream from buffer
-        const bufferStream = Readable.from(req.file.buffer);
-
         // Upload to Cloudinary
-        const uploadPromise = new Promise((resolve, reject) => {
+        const result = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
                 {
-                    folder: 'library-books',
                     resource_type: 'raw', // For PDFs
+                    folder: 'library_books',
                     public_id: `book_${Date.now()}`,
                     format: 'pdf'
                 },
                 (error, result) => {
-                    if (error) {
-                        console.error('❌ Cloudinary error:', error);
-                        reject(error);
-                    } else {
-                        console.log('✅ Cloudinary upload success:', result.secure_url);
-                        resolve(result);
-                    }
+                    if (error) reject(error);
+                    else resolve(result);
                 }
             );
 
-            bufferStream.pipe(uploadStream);
+            uploadStream.end(req.file.buffer);
         });
 
-        const result = await uploadPromise;
+        const filePath = result.secure_url; // This is the Cloudinary URL
+
+        console.log('✅ File uploaded to Cloudinary:', filePath);
 
         res.json({
             success: true,
-            filePath: result.secure_url, // Cloudinary URL
+            filePath: filePath,
             fileName: req.file.originalname,
             fileSize: req.file.size,
-            cloudinaryId: result.public_id,
-            message: 'File uploaded successfully to cloud'
+            message: 'File uploaded successfully'
         });
 
     } catch (error) {
